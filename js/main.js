@@ -3,16 +3,22 @@ try {
     let account;
 
     // let web3js = new Web3(new Web3.providers.HttpProvider(RCP_ADDRESS));
-    let web3js_ws = new Web3(new Web3.providers.WebsocketProvider(WS_ADDRESS));
+    let web3js_ws = window.web3js_ws = new Web3(new Web3.providers.WebsocketProvider(WS_ADDRESS));
 
     document.getElementById('private-key').value = WALLET_PRIVATE_KEY;
-    // web3js_ws.eth.personal.newAccount(WALLET_PRIVATE_KEY, function(data) {
-    web3js_ws.eth.getAccounts().then( function(accounts) {
-        add_log_entry('Accounts available: ' + accounts);
-        account = accounts[0];
-        add_log_entry('Using first account as sender account: ' + account);
+
+    // on ganache we already have 10 pre-filled accounts for testing
+    // however on the real rpc a user wont have any accounts and for the import with the private key, an account will
+    // have to be created like below:
+
+    web3js_ws.eth.personal.newAccount(WALLET_PRIVATE_KEY, function (data) {
+        web3js_ws.eth.getAccounts().then(function (accounts) {
+            add_log_entry('Accounts available: ' + accounts);
+            account = accounts[0];
+            web3js_ws.eth.defaultAccount = accounts[0];
+            add_log_entry('Using first account as sender account: ' + account);
+        });
     });
-    // });
 
     // var account = web3js_ws.eth.accounts.privateKeyToAccount(WALLET_PRIVATE_KEY);
 
@@ -25,25 +31,48 @@ try {
     });
 
 
-    // create test event
-    document.getElementById('create-test-event-button').addEventListener("click", function () {
-        // check balance...
-        web3js_ws.eth.getBalance(WALLET_ADDRESS).then(function(balance){
-            add_log_entry('Sender wallet balance (WALLET_ADDRESS): ' + balance);
-        });
+    // check in
+    document.getElementById('checkin-button').addEventListener("click", function () {
 
+        check_balance();
 
         ticketing_contract.methods.checkIn(TRANSPORTER_ADDRESS).send({
             'from': WALLET_ADDRESS,
             'gas': 3000000,
-        }).then(function(data) {
-            add_log_entry('Checked in with hash '+ JSON.stringify(data))
+        }).then(function (data) {
+            add_log_entry('Checked in with hash ' + JSON.stringify(data))
         });
-
 
     });
 
 
+    // check out
+    document.getElementById('checkout-button').addEventListener("click", function () {
+
+        check_balance();
+
+        ticketing_contract.methods.checkOut().send({
+            'from': WALLET_ADDRESS,
+            'gas': 3000000,
+        }).then(function (data) {
+            add_log_entry('Checked out with hash ' + JSON.stringify(data))
+        });
+    });
+
+
+    // list all trips for a user
+    document.getElementById('list-all-trips-button').addEventListener("click", function () {
+        ticketing_contract.methods.getTrips(
+            WALLET_ADDRESS,
+        ).call({
+            'from': WALLET_ADDRESS,
+        }).then((result) => {
+            add_log_entry('Trips: ' + JSON.stringify(result))
+        });
+    });
+
+
+    // Sign and recover
     document.getElementById('sign-recover-button').addEventListener("click", function () {
 
         message = document.getElementById('message').value;
@@ -67,13 +96,10 @@ try {
         } else {
             add_log_entry("Something is not right, the calculated key doesnt match the one from the private key!")
         }
-
     });
 
-
     document.getElementById('clear-log-button').addEventListener("click", function () {
-        var log = document.getElementById("log");
-        log.innerHTML = '';
+        document.getElementById("log").innerHTML = '';
     });
 
 
@@ -88,4 +114,12 @@ function add_log_entry(text) {
     p.textContent = text;
     document.getElementById('log').appendChild(p);
 
+}
+
+
+// check balance...
+function check_balance() {
+    web3js_ws.eth.getBalance(WALLET_ADDRESS).then(function (balance) {
+        add_log_entry('Sender wallet balance (WALLET_ADDRESS): ' + balance);
+    });
 }
