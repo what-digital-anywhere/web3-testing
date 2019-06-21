@@ -27,7 +27,7 @@ try {
     // Listenting to the TripCreated event
     // https://ethereum.stackexchange.com/questions/47362/how-to-listen-to-events-generated-by-an-existing-contract-in-web3-1-x-x
     ticketing_contract.events.TripCreated((err, events) => {
-        add_log_entry(err, events);
+        add_log_entry('EVENT received: '+ err + JSON.stringify(events));
     });
 
 
@@ -80,14 +80,21 @@ try {
         add_log_entry('using private key ' + WALLET_PRIVATE_KEY);
 
         // sign
-        var sig_obj = web3js_ws.eth.accounts.sign(message, WALLET_PRIVATE_KEY);
+        let sig_obj = web3js_ws.eth.accounts.sign(message, WALLET_PRIVATE_KEY);
+
+        // QR code should consist of the message and the sig_obj.signature as json
 
         add_log_entry("signature object: " + JSON.stringify(sig_obj));
 
         add_log_entry("trying to get the public address from the signature...");
 
+        let signature = sig_obj.signature;
 
-        var pub_key = web3js_ws.eth.accounts.recover(message, sig_obj.signature);
+        // the checking person receives the message and the signature via QR code from the passenger
+
+        var pub_key = web3js_ws.eth.accounts.recover(message, signature);
+
+        // now check the blockchain with the t
 
         add_log_entry(pub_key);
 
