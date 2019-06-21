@@ -1,0 +1,45 @@
+<!doctype html>
+<html class="no-js" lang="">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title></title>
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="/css/base.css" media="screen, projection" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<h1>Wallet</h1>
+
+<p>Private Key:</p>
+<input type="text" id="private-key" style="width: 100%;" value="" />
+<input type="hidden" id="message" style="width: 100%;" value="some message" />
+
+<h1>Sign / Recover</h1>
+
+<button id="sign-recover-button">Sign / Recover</button>
+
+
+<h1>SC Testing</h1>
+
+<button id="create-test-event-button">Check in</button>
+
+<h1>Log</h1>
+
+<button id="clear-log-button">clear log</button>
+
+<div id="log"></div>
+
+
+<!--[if lt IE 8]>
+You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
+<![endif]-->
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.37/dist/web3.min.js"></script>
+<script src="js/ticketing-contract.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
