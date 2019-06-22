@@ -2,6 +2,8 @@ try {
 
     let account;
 
+    let transporterPubKey = document.getElementById('transporter-pub-key').value = TRANSPORTER_ADDRESS;
+
     // let web3js = new Web3(new Web3.providers.HttpProvider(RCP_ADDRESS));
     let web3js_ws = window.web3js_ws = new Web3(new Web3.providers.WebsocketProvider(WS_ADDRESS));
 
@@ -12,7 +14,9 @@ try {
     // have to be created like below:
 
     account = web3js_ws.eth.accounts.privateKeyToAccount(WALLET_PRIVATE_KEY);
+    web3js_ws.eth.accounts.wallet.add(account);
     web3js_ws.eth.defaultAccount = account.address;
+
     add_log_entry('using account ' + JSON.stringify(account));
 
     let ticketing_contract = new web3js_ws.eth.Contract(SC_TICKETNG_ABI, SC_TICKETNG_ADDRESS);
@@ -20,14 +24,26 @@ try {
     // Listenting to the TripCreated event
     // https://ethereum.stackexchange.com/questions/47362/how-to-listen-to-events-generated-by-an-existing-contract-in-web3-1-x-x
     ticketing_contract.events.TripCreated((err, events) => {
-        add_log_entry('EVENT received: ' + err + JSON.stringify(events));
+        add_log_entry('TripCreated EVENT received: ' + err + JSON.stringify(events));
+    });
+
+    ticketing_contract.events.CheckedOut((err, events) => {
+        add_log_entry('CheckedOut EVENT received: ' + err + JSON.stringify(events));
     });
 
     // change private key
     document.getElementById('change-private-key-button').addEventListener("click", function () {
         account = web3js_ws.eth.accounts.privateKeyToAccount(document.getElementById('private-key').value);
+        web3js_ws.eth.accounts.wallet.add(account);
         web3js_ws.eth.defaultAccount = account.address;
         add_log_entry('using account ' + JSON.stringify(account));
+    });
+
+
+    // change transporter pub key
+    document.getElementById('change-transporter-pub-key-button').addEventListener("click", function () {
+        transporterPubKey = document.getElementById('transporter-pub-key').value;
+        add_log_entry('transporter pub key set to: ' + transporterPubKey);
     });
 
     // check in
@@ -35,7 +51,7 @@ try {
 
         check_balance();
 
-        ticketing_contract.methods.checkIn(TRANSPORTER_ADDRESS).send({
+        ticketing_contract.methods.checkIn(transporterPubKey).send({
             'from': account.address,
             'gas': 3000000,
         }).then((data) => {
@@ -73,6 +89,25 @@ try {
             add_log_entry('Trips: ' + JSON.stringify(result))
         }).catch((err) => {
             add_log_entry('Error while listing trips: ' + err.message)
+        });
+    });
+
+    document.getElementById('set-price-button').addEventListener("click", function () {
+
+        let startTimestamp = document.getElementById('start-timestamp').value;
+
+        // send price to SC
+        ticketing_contract.methods.setPrice(
+            account.address,
+            45000000,
+            startTimestamp,
+        ).send({
+            'from': account.address,
+            'gas': 3000000,
+        }).then((data) => {
+            add_log_entry('Setting price was a success: ' + JSON.stringify(data));
+        }).catch((err) => {
+            add_log_entry('Error while setting price: ' + err.message);
         });
     });
 
