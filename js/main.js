@@ -20,9 +20,15 @@ try {
     // Listenting to the TripCreated event
     // https://ethereum.stackexchange.com/questions/47362/how-to-listen-to-events-generated-by-an-existing-contract-in-web3-1-x-x
     ticketing_contract.events.TripCreated((err, events) => {
-        add_log_entry('EVENT received: '+ err + JSON.stringify(events));
+        add_log_entry('EVENT received: ' + err + JSON.stringify(events));
     });
 
+    // change private key
+    document.getElementById('change-private-key-button').addEventListener("click", function () {
+        account = web3js_ws.eth.accounts.privateKeyToAccount(document.getElementById('private-key').value);
+        web3js_ws.eth.defaultAccount = account.address;
+        add_log_entry('using account ' + JSON.stringify(account));
+    });
 
     // check in
     document.getElementById('checkin-button').addEventListener("click", function () {
