@@ -11,16 +11,9 @@ try {
     // however on the real rpc a user wont have any accounts and for the import with the private key, an account will
     // have to be created like below:
 
-    web3js_ws.eth.personal.newAccount(WALLET_PRIVATE_KEY, function (data) {
-        web3js_ws.eth.getAccounts().then(function (accounts) {
-            add_log_entry('Accounts available: ' + accounts);
-            account = accounts[0];
-            web3js_ws.eth.defaultAccount = accounts[0];
-            add_log_entry('Using first account as sender account: ' + account);
-        });
-    });
-
-    // var account = web3js_ws.eth.accounts.privateKeyToAccount(WALLET_PRIVATE_KEY);
+    account = web3js_ws.eth.accounts.privateKeyToAccount(WALLET_PRIVATE_KEY);
+    web3js_ws.eth.defaultAccount = account.address;
+    add_log_entry('using account ' + JSON.stringify(account));
 
     let ticketing_contract = new web3js_ws.eth.Contract(SC_TICKETNG_ABI, SC_TICKETNG_ADDRESS);
 
@@ -37,10 +30,12 @@ try {
         check_balance();
 
         ticketing_contract.methods.checkIn(TRANSPORTER_ADDRESS).send({
-            'from': WALLET_ADDRESS,
+            'from': account.address,
             'gas': 3000000,
-        }).then(function (data) {
+        }).then((data) => {
             add_log_entry('Checked in with hash ' + JSON.stringify(data))
+        }).catch((err) => {
+            add_log_entry('Error while checking in: ' + err.message)
         });
 
     });
@@ -52,10 +47,12 @@ try {
         check_balance();
 
         ticketing_contract.methods.checkOut().send({
-            'from': WALLET_ADDRESS,
+            'from': account.address,
             'gas': 3000000,
         }).then(function (data) {
             add_log_entry('Checked out with hash ' + JSON.stringify(data))
+        }).catch((err) => {
+            add_log_entry('Error while checking out: ' + err.message)
         });
     });
 
@@ -63,11 +60,13 @@ try {
     // list all trips for a user
     document.getElementById('list-all-trips-button').addEventListener("click", function () {
         ticketing_contract.methods.getTrips(
-            WALLET_ADDRESS,
+            account.address,
         ).call({
-            'from': WALLET_ADDRESS,
+            'from': account.address,
         }).then((result) => {
             add_log_entry('Trips: ' + JSON.stringify(result))
+        }).catch((err) => {
+            add_log_entry('Error while listing trips: ' + err.message)
         });
     });
 
@@ -77,10 +76,11 @@ try {
 
         message = document.getElementById('message').value;
 
-        add_log_entry('using private key ' + WALLET_PRIVATE_KEY);
+        add_log_entry('using private key ' + account.privateKey);
+        add_log_entry('public key is ' + account.address);
 
         // sign
-        let sig_obj = web3js_ws.eth.accounts.sign(message, WALLET_PRIVATE_KEY);
+        let sig_obj = web3js_ws.eth.accounts.sign(message, account.privateKey);
 
         // QR code should consist of the message and the sig_obj.signature as json
 
@@ -98,7 +98,7 @@ try {
 
         add_log_entry(pub_key);
 
-        if (pub_key === account) {
+        if (pub_key === account.address) {
             add_log_entry("the calculated pub key matches the originally given one!")
         } else {
             add_log_entry("Something is not right, the calculated key doesnt match the one from the private key!")
