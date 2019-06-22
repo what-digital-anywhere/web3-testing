@@ -2,7 +2,8 @@ try {
 
     let account;
 
-    let transporterPubKey = document.getElementById('transporter-pub-key').value = TRANSPORTER_ADDRESS;
+    let transporterPubKey = TRANSPORTER_ADDRESS;
+    document.getElementById('transporter-pub-key').value = TRANSPORTER_ADDRESS;
 
     // let web3js = new Web3(new Web3.providers.HttpProvider(RCP_ADDRESS));
     let web3js_ws = window.web3js_ws = new Web3(new Web3.providers.WebsocketProvider(WS_ADDRESS));
@@ -82,6 +83,7 @@ try {
     // list all trips for a user
     document.getElementById('list-all-trips-button').addEventListener("click", function () {
         ticketing_contract.methods.getTrips(
+            // "0x6043bCCB598318da02663d01643030a9E255c198",
             account.address,
         ).call({
             'from': account.address,
@@ -98,8 +100,8 @@ try {
 
         // send price to SC
         ticketing_contract.methods.setPrice(
-            account.address,
-            45000000,
+            document.getElementById('passenger-pub-key').value,
+            String(4.5 * 100000000000000000),
             startTimestamp,
         ).send({
             'from': account.address,
